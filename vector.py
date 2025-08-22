@@ -1,51 +1,68 @@
 # importing essentials for vector computation
 from math import sqrt, acos, isclose
 
-# Constants
-COMPONENT_LIMIT = 3
-UNIT_VECTORS = ['i', 'j', 'k']
-DIRECTIONS = ['x', 'y', 'z']
+# Constants for vector operations
+COMPONENT_LIMIT = 3           # Maximum number of components (x, y, z)
+UNIT_VECTORS = ['i', 'j', 'k'] # Unit vector symbols for display
+DIRECTIONS = ['x', 'y', 'z']   # Direction names for attribute access
 
 class vec:
     def __init__(self, *args):
         '''
-        initializes vector with components passed as arguments
+        Initializes a vector with given components.
+        Pads with zeros if fewer than 3 components are provided.
+        Stores a formatted cartesian string for display.
         '''
         self.components = [float(n) for n in args]
+        # Pad with zeros if not enough components
         if (d:=(COMPONENT_LIMIT)-len(self.components)) > 0:
             for _ in range(d):
                 self.components.append(0.0)
         else:
             self.components = self.components[0:COMPONENT_LIMIT]
+        # Build cartesian string (e.g., "3i + 2j - 4k")
         cartesian = [f"{magnitude}{direction}" for magnitude, direction in zip(self.components, UNIT_VECTORS) if magnitude!=0]
         self.cartesian = " + ".join(cartesian).replace("+ -", "- ")
 
     @classmethod
     def from_input(cls, vector_name: str = 'vector'):
         '''
-        creates a vector with coorinate x, y, z separated by spaces.
+        Creates a vector from user input.
+        Accepts space-separated values or math expressions for components.
+        Example: "1 sqrt(3) 2"
         '''
         comps = [float(eval(c)) for c in input(f"Enter components of {vector_name}: ").split()]
         return cls(*comps)
 
     @property
     def magnitude(self):
+        '''
+        Returns the magnitude (length) of the vector, rounded to 2 decimals.
+        '''
         return round(sqrt(sum([c*c for c in self.components])), 2)
 
     @property
     def unit(self):
+        '''
+        Returns the unit vector (direction only) of the vector.
+        Raises ValueError for zero vector.
+        '''
         mag = self.magnitude
         if mag == 0:
             raise ValueError("Zero vector has no unit vector")
         return self.__class__(*[round(c/mag, 2) for c in self.components])
 
     def dot(self, B):
-        ''' Returns the dot product of two vectors '''
+        '''
+        Returns the dot product of self and another vector B.
+        '''
         product = [p*q for p, q in zip(self.components, B.components)]
         return sum(product)
 
     def cross(self, B):
-        ''' Returns the cross product of two vectors '''
+        '''
+        Returns the cross product of self and another vector B as a new vec.
+        '''
         a1, a2, a3 = self.components
         b1, b2, b3 = B.components
         return vec(
@@ -55,77 +72,105 @@ class vec:
         )
 
     def theta(self, B):
-        '''Returns the angle between two vectors (in radians)'''
+        '''
+        Returns the angle (in radians) between self and another vector B.
+        '''
         modA = self.magnitude
         modB = B.magnitude
         AdotB = self.dot(B)
         angle = acos(AdotB/(modA*modB))
         return angle
     
-    # returns the cartesian coordinates when vector object is passed into print()
     def __repr__(self):
-        '''Returns the cartesian of a vector when vector instance is passed into print()'''
+        '''
+        Returns the cartesian string representation of the vector.
+        Example: "3i + 2j - 4k"
+        '''
         return self.cartesian
 
-    # addition and subtraction of vectors via + and - operators
     def __add__(self, v): 
+        '''
+        Adds two vectors component-wise.
+        '''
         return vec(*[a+b for a,b in zip(self.components, v.components)])
     
     def __sub__(self, v):
+        '''
+        Subtracts vector v from self component-wise.
+        '''
         return vec(*[a-b for a,b in zip(self.components, v.components)])
     
-    # dot product via * operator
     def __mul__(self, v):
-        if isinstance(v, vec): # if v is a vector, then find the dot product
+        '''
+        If v is a vector, returns dot product.
+        If v is a scalar, scales the vector.
+        '''
+        if isinstance(v, vec):
             return self.dot(v)
         else:
-            return vec(*[c*v for c in self.components]) # if v is scalar, scale the vector
+            return vec(*[c*v for c in self.components])
     def __rmul__(self, v):
+        '''
+        Supports scalar multiplication from the left.
+        '''
         return self.__mul__(v)
     
-    # cross product via ^ operator
     def __xor__(self, v):
+        '''
+        Returns the cross product using ^ operator.
+        '''
         if not isinstance(v, vec):
             return NotImplemented
         return self.cross(v)
         
-    # division by scalar
     def __truediv__(self, n):
+        '''
+        Divides the vector by a scalar n (element-wise, rounded to 2 decimals).
+        '''
         if isinstance(n, vec):
             return NotImplemented
         dividedComponents = [round(c/n, 2) for c in self.components]
         return vec(*dividedComponents)
     def __floordiv__(self, n):
+        '''
+        Divides the vector by a scalar n using floor division.
+        '''
         if isinstance(n, vec):
             return NotImplemented
         dividedComponents = [c//n for c in self.components]
         return vec(*dividedComponents)
  
-    # angle of two vectors operator @
     def __matmul__(self, v):
-        '''Returns the angle between vectors'''
+        '''
+        Returns the angle between two vectors using @ operator.
+        '''
         return self.theta(v)
  
-    # defines equality of two vectors. Two vectors are equal if all of their components are equal
     def __eq__(self, v):
+        '''
+        Checks if two vectors are equal (all components are close).
+        '''
         if not isinstance(v, vec):
             return NotImplemented
         return all(isclose(a, b, rel_tol=1e-9, abs_tol=1e-9) for a, b in zip(self.components, v.components))
 
-    # returns the component of vector in position i. v[0] => first component
     def __getitem__(self, i):
+        '''
+        Allows indexing to access components (e.g., v[0] for x component).
+        '''
         return self.components[i]
 
-    # returns x,y,z components of vector v => v.x, v.y, v.z
     def __getattr__(self, name):
+        '''
+        Allows access to components by direction (e.g., v.x, v.y, v.z).
+        '''
         if name in DIRECTIONS:
             idx = DIRECTIONS.index(name)
             return self.components[idx]
         raise AttributeError(f"'Vector' has no attribute '{name}'")
 
     def __len__(self):
+        '''
+        Returns the number of components in the vector.
+        '''
         return len(self.components)
-
-def resultant(vecA: vec, vecB: vec):
-    R_components = [a+b for a, b in zip(vecA.components, vecB.components)]
-    return vec(*R_components)

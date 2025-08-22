@@ -28,6 +28,9 @@ class vec:
         comps = [float(eval(c)) for c in input(f"Enter components of {vector_name}: ").split()]
         return cls(*comps)
 
+    @property
+    def magnitude(self):
+        return round(sqrt(sum([c*c for c in self.components])), 2)
 
     def dot(self, B):
         ''' Returns the dot product of two vectors '''

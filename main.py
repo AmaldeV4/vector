@@ -1,3 +1,4 @@
 from vector import vec
 
-print(vec(3,4).magnitude)
+a = vec(12, 4, 60)
+print(a/3)

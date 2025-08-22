@@ -37,6 +37,15 @@ class vec:
         product = [p*q for p, q in zip(self.components, B.components)]
         return sum(product)
 
+    def cross(self, B):
+        ''' Returns the cross product of two vectors '''
+        a1, a2, a3 = self.components
+        b1, b2, b3 = B.components
+        return vec(
+            a2*b3 - a3*b2,
+            a3*b1 - a1*b3,
+            a1*b2 - a2*b1
+        )
 
     def theta(self, B):
         '''Returns the angle between two vectors'''
@@ -64,10 +73,27 @@ class vec:
         if isinstance(v, vec): # if v is a scalar, then scale the vector
             return self.dot(v)
         else:
-            return vec(*[a*v for a in self.components]) # if v is vector, return the dot product
+            return vec(*[c*v for c in self.components]) # if v is vector, return the dot product
     def __rmul__(self, v):
         return self.__mul__(v)
     
+    # cross product via ^ operator
+    def __xor__(self, v):
+        if not isinstance(v, vec):
+            return NotImplemented
+        return self.cross(v)
+    
+    # division by scalar
+    def __truediv__(self, n):
+        if isinstance(n, vec):
+            return NotImplemented
+        dividedComponents = [round(c/n, 2) for c in self.components]
+        return vec(*dividedComponents)
+    def __floordiv__(self, n):
+        if isinstance(n, vec):
+            return NotImplemented
+        dividedComponents = [c//n for c in self.components]
+        return vec(*dividedComponents)
     # defines equality of two vectors. Two vectors are equal if all of their components are equal
     def __eq__(self, v):
         if not isinstance(v, vec):

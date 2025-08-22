@@ -1,4 +1,4 @@
 from vector import vec
 
-a = vec(12, 4, 60)
-print(a/3)
+v = vec(-1, 1, -1)
+print(v)

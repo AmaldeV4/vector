@@ -1,5 +1,5 @@
 # importing essentials for vector computation
-from math import pi, sqrt, acos, isclose
+from math import sqrt, acos, isclose
 
 # Constants
 COMPONENT_LIMIT = 3
@@ -32,6 +32,13 @@ class vec:
     def magnitude(self):
         return round(sqrt(sum([c*c for c in self.components])), 2)
 
+    @property
+    def unit(self):
+        mag = self.magnitude
+        if mag == 0:
+            raise ValueError("Zero vector has no unit vector")
+        return self.__class__(*[round(c/mag, 2) for c in self.components])
+
     def dot(self, B):
         ''' Returns the dot product of two vectors '''
         product = [p*q for p, q in zip(self.components, B.components)]
@@ -48,14 +55,13 @@ class vec:
         )
 
     def theta(self, B):
-        '''Returns the angle between two vectors'''
+        '''Returns the angle between two vectors (in radians)'''
         modA = self.magnitude
         modB = B.magnitude
         AdotB = self.dot(B)
-        angle = acos(AdotB/(modA*modB))*180/pi
-        precision = 3 # decimal digits in angle
-        return round(angle, precision)
-
+        angle = acos(AdotB/(modA*modB))
+        return angle
+    
     # returns the cartesian coordinates when vector object is passed into print()
     def __repr__(self):
         '''Returns the cartesian of a vector when vector instance is passed into print()'''
@@ -70,10 +76,10 @@ class vec:
     
     # dot product via * operator
     def __mul__(self, v):
-        if isinstance(v, vec): # if v is a scalar, then scale the vector
+        if isinstance(v, vec): # if v is a vector, then find the dot product
             return self.dot(v)
         else:
-            return vec(*[c*v for c in self.components]) # if v is vector, return the dot product
+            return vec(*[c*v for c in self.components]) # if v is scalar, scale the vector
     def __rmul__(self, v):
         return self.__mul__(v)
     
@@ -82,7 +88,7 @@ class vec:
         if not isinstance(v, vec):
             return NotImplemented
         return self.cross(v)
-    
+        
     # division by scalar
     def __truediv__(self, n):
         if isinstance(n, vec):
@@ -94,6 +100,12 @@ class vec:
             return NotImplemented
         dividedComponents = [c//n for c in self.components]
         return vec(*dividedComponents)
+ 
+    # angle of two vectors operator @
+    def __matmul__(self, v):
+        '''Returns the angle between vectors'''
+        return self.theta(v)
+ 
     # defines equality of two vectors. Two vectors are equal if all of their components are equal
     def __eq__(self, v):
         if not isinstance(v, vec):
@@ -111,7 +123,9 @@ class vec:
             return self.components[idx]
         raise AttributeError(f"'Vector' has no attribute '{name}'")
 
+    def __len__(self):
+        return len(self.components)
+
 def resultant(vecA: vec, vecB: vec):
     R_components = [a+b for a, b in zip(vecA.components, vecB.components)]
-    R = sqrt(sum([c*c for c in R_components]))
-    return R
+    return vec(*R_components)
